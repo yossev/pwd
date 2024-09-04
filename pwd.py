@@ -1,8 +1,13 @@
+
+
 import argparse
 from cryptography.fernet import Fernet
 import json
 import os
-
+import pyperclip
+import secrets
+import time
+import string
 
 STORAGE_FILE = 'passwords.json'
 ASCII_ART = """
@@ -70,7 +75,11 @@ def retrieve_password(service, key):
                 print("Decrypting Password...")
                 decrypted_password = cipher_suite.decrypt(encrypted_password.encode()).decode()
                 print(f"Username : {passwords[service]['username']}")
-                print(f"Password : {passwords[service]['password']}")
+                print(f"Password : {decrypted_password}")
+                copy_pass = input("Would you like to copy your password ? (Y/N):  \n")
+                if copy_pass.lower() ==  'y':
+                    pyperclip.copy(decrypted_password)
+                    print("Password Copied Successfully")
             except Exception as e:
                 print("Error decrypting the password. Invalid key or corrupted data.")
         else:
@@ -85,25 +94,59 @@ def generate_key():
     print(key.decode())
     print("\nPlease store this key somewhere safe. You will need it to access your passwords.")
     
-    save_choice = input("Would you like to save the key to a file? (Y/N): ")
+    save_choice = input("Would you like to save the key to a file? (Y/N): \n")
     if save_choice.lower() == 'y':
-        key_file_path = input("Enter the file path where you want to save the key: ")
+        key_file_path = input("Enter the file path where you want to save the key: \n")
         with open(key_file_path, 'wb') as key_file:
             key_file.write(key)
         print(f"Key saved to {key_file_path}")
+    else:
+        copy_choice = input("Would you like to copy your KEY to the Clipboard? (Y/N): \n")
+        if copy_choice.lower() == 'y':
+            pyperclip.copy(key.decode())
+            print("Your Key has been copied. please keep it safe.")
+
+
+def generate_password(length=12, include_uppercase=True, include_digits=True, include_symbols=False):
+    include_symbols_choice = input("Woudld you like to include Symbols in your generated password? (Y/N) \n")
+    if include_symbols_choice.lower() == 'y':
+        include_symbols = True
+
+    character_pool = string.ascii_lowercase
+    
+    if include_uppercase:
+        character_pool += string.ascii_uppercase
+    if include_digits:
+        character_pool += string.digits
+    if include_symbols:
+        character_pool += string.punctuation
+
+    print("Generating password...")
+    time.sleep(2)
+    password = ''.join(secrets.choice(character_pool) for i in range(length))
+    generated_password_choice = input("Password has been generated.\nC -> copy , S -> show\n")
+    if generated_password_choice.lower() == 'c':
+        pyperclip.copy(password)
+        print("Password has been copied Successfully.")
+    elif generated_password_choice.lower() == 's':
+        print(f"Here is your generated password {password}")
+
 
 
 def main():
     parser = argparse.ArgumentParser(
-    description="Password Manager CLI",
-    epilog="Use 'python pwd_manager.py add' to add a password and get started with PWD."
+    description="",
+    epilog="Use 'python pwd.py add' to add a password and get started with PWD."
 )
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
     subparsers = parser.add_subparsers(dest="command", help="commands")
 
     print(ASCII_ART)
-    print("Welcome to the password manager CLI!")
+    print("Welcome to PWD. the Unix Philosophy inspired Password manager.")
 
+
+    # Help Command
+    help_parser = subparsers.add_parser('help', help='Display all commands')
     # Add Command
     add_parser = subparsers.add_parser('add', help='Add a new password')
     add_parser.add_argument('service', nargs='?', help='The service name')
@@ -118,9 +161,11 @@ def main():
     retrieve_parser = subparsers.add_parser('ret', help="Retrieve a password")
     retrieve_parser.add_argument('service', nargs='?', help="Service to retrieve the password from")
 
+    # Generate Password Argument
+    gen_parser = subparsers.add_parser('gen', help="Generate a new password")
 
-    # init parser
-    key_parser = subparsers.add_parser('init', help="Generate a new encryption key")
+    # gen-key parser
+    key_parser = subparsers.add_parser('gen-key', help="Generate a new encryption key")
 
     args = parser.parse_args()
 
@@ -137,6 +182,7 @@ def main():
         confirmation = input(" Are you sure you want to delete this password entry? ( Y / N )")
         if confirmation.lower() == 'y':
             print("Deleting entry...")
+            time.sleep(2)
             delete_password(service)
             print(f"Entry for {service} has been deleted successfully.")
         elif confirmation.lower() == 'n':
@@ -145,12 +191,16 @@ def main():
     elif args.command == 'ret':
         service = args.service or input("Please Enter the Service you wanna retrieve: ")
         key = input("Enter your encryption key: ")
+        key = key.encode()
         retrieve_password(service, key)
 
-    elif args.command == 'init':
+    elif args.command == 'gen-key':
         generate_key()
+    
+    elif args.command == 'gen':
+        generate_password()
 
-    else:
+    elif args.command == 'help' or args.command == 'h':
         parser.print_help()
 
 if __name__ == '__main__':
