@@ -1,5 +1,4 @@
 
-
 import argparse
 from cryptography.fernet import Fernet
 import json
@@ -8,6 +7,15 @@ import pyperclip
 import secrets
 import time
 import string
+import logging
+
+
+# LOGGER
+logging.basicConfig(
+    filename='transactions.log',
+    level=logging.INFO,  
+    format='%(asctime)s - %(levelname)s - %(message)s',
+)
 
 STORAGE_FILE = 'passwords.json'
 ASCII_ART = """
@@ -44,6 +52,7 @@ def add_password(service, username, password, key):
 
     with open(STORAGE_FILE, 'w') as f:
         json.dump(passwords, f, indent=4)
+    logging.info(f"Added password for service: {service}")
 
 
 def delete_password(service):
@@ -56,8 +65,10 @@ def delete_password(service):
             with open(STORAGE_FILE, 'w') as f:
                 json.dump(passwords, f, indent=4)
             print(f"Password for {service} has been deleted.")
+            logging.info(f"Password for {service} has been deleted.")
         else:
             print(f"No password found for service: {service}.")
+            logging.warning(f"Attempted to delete non-existent password for service: {service}")
     else:
         ("No Passwords stored yet")
 
@@ -92,6 +103,7 @@ def generate_key():
     key = Fernet.generate_key() # FERNET USES AES Keys
     print("Your encryption key has been generated:")
     print(key.decode())
+    logging.info("New Key has been generated")
     print("\nPlease store this key somewhere safe. You will need it to access your passwords.")
     
     save_choice = input("Would you like to save the key to a file? (Y/N): \n")
@@ -132,11 +144,25 @@ def generate_password(length=12, include_uppercase=True, include_digits=True, in
         print(f"Here is your generated password {password}")
 
 
+def list_services():
+    if os.path.exists(STORAGE_FILE):
+        with open(STORAGE_FILE, 'r') as f:
+            passwords = json.load(f)
+
+        if passwords:
+            print("Here are all the services stored currently :")
+            for service in passwords:
+                print(f"{service}")
+        else:
+            print("No services stored yet.")
+    else:
+        print("No password file found.")
+
 
 def main():
     parser = argparse.ArgumentParser(
     description="",
-    epilog="Use 'python pwd.py add' to add a password and get started with PWD."
+    epilog="use python pwd.py help to get started with PWD."
 )
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
     subparsers = parser.add_subparsers(dest="command", help="commands")
@@ -154,18 +180,21 @@ def main():
     add_parser.add_argument('password', nargs='?', help='The password')
 
     # Delete Command
-    delete_parser = subparsers.add_parser('delete', help="Delete a password")
-    delete_parser.add_argument('service', nargs='?', help="The service to be deleted")
+    delete_parser = subparsers.add_parser('delete', help="Delete a password.")
+    delete_parser.add_argument('service', nargs='?', help="The service to be deleted.")
 
     # Retrieve Argument
-    retrieve_parser = subparsers.add_parser('ret', help="Retrieve a password")
-    retrieve_parser.add_argument('service', nargs='?', help="Service to retrieve the password from")
+    retrieve_parser = subparsers.add_parser('ret', help="Retrieve a password.")
+    retrieve_parser.add_argument('service', nargs='?', help="Service to retrieve the password from.")
 
     # Generate Password Argument
-    gen_parser = subparsers.add_parser('gen', help="Generate a new password")
+    gen_parser = subparsers.add_parser('gen', help="Generate a new password.")
 
     # gen-key parser
-    key_parser = subparsers.add_parser('gen-key', help="Generate a new encryption key")
+    key_parser = subparsers.add_parser('gen-key', help="Generate a new encryption key.")
+
+    # List Parser
+    list_parser = subparsers.add_parser('list', help="List all the services that have passwords.")
 
     args = parser.parse_args()
 
@@ -175,10 +204,12 @@ def main():
         password = args.password or input("Enter the password: ")
         key = input("Enter your encryption key: ")
         add_password(service, username, password, key)
+        print("Adding password")
+        time.sleep(2)
         print(f"Password for {service} added successfully!")
         
     elif args.command == 'delete':
-        service = args.service or input("Enter the Service to be deleted")
+        service = args.service or input("Enter the Service to be deleted :\n")
         confirmation = input(" Are you sure you want to delete this password entry? ( Y / N )")
         if confirmation.lower() == 'y':
             print("Deleting entry...")
@@ -192,6 +223,8 @@ def main():
         service = args.service or input("Please Enter the Service you wanna retrieve: ")
         key = input("Enter your encryption key: ")
         key = key.encode()
+        print("Getting your Password...")
+        time.sleep(2)
         retrieve_password(service, key)
 
     elif args.command == 'gen-key':
@@ -199,6 +232,9 @@ def main():
     
     elif args.command == 'gen':
         generate_password()
+    
+    elif args.command == 'list':
+        list_services()
 
     elif args.command == 'help' or args.command == 'h':
         parser.print_help()
