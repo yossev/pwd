@@ -1,3 +1,15 @@
+
+$$$$$$$\  $$\      $$\ $$$$$$$\  
+$$  __$$\ $$ | $\  $$ |$$  __$$\ 
+$$ |  $$ |$$ |$$$\ $$ |$$ |  $$ |
+$$$$$$$  |$$ $$ $$\$$ |$$ |  $$ |
+$$  ____/ $$$$  _$$$$ |$$ |  $$ |
+$$ |      $$$  / \$$$ |$$ |  $$ |
+$$ |      $$  /   \$$ |$$$$$$$  |
+\__|      \__/     \__|\_______/ 
+                                 
+                                 
+                                 
 # Introducing PWD
 
 PWD is a [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy) based password management CLI application, made with simplicity in mind. Inspired by [pass](https://www.passwordstore.org/) - the standard unix password manager
