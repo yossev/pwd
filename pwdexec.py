@@ -54,23 +54,33 @@ def add_password(service, username, password, key):
         json.dump(passwords, f, indent=4)
     logging.info(f"Added password for service: {service}")
 
-
-def delete_password(service):
+def delete_password(service, key):
+    cipher_suite = get_cipher_suite(key)
     if os.path.exists(STORAGE_FILE):
         with open(STORAGE_FILE, 'r') as f:
             passwords = json.load(f)
         
         if service in passwords:
-            del passwords[service]
-            with open(STORAGE_FILE, 'w') as f:
-                json.dump(passwords, f, indent=4)
-            print(f"Password for {service} has been deleted.")
-            logging.info(f"Password for {service} has been deleted.")
+            try:
+                # Confirm the key before deleting
+                encrypted_password = passwords[service]['password']
+                # Attempt to decrypt to verify the key
+                cipher_suite.decrypt(encrypted_password.encode())
+                
+                # If decryption succeeds, proceed with deletion
+                del passwords[service]
+                with open(STORAGE_FILE, 'w') as f:
+                    json.dump(passwords, f, indent=4)
+                print(f"Password for {service} has been deleted.")
+                logging.info(f"Password for {service} has been deleted.")
+            except Exception as e:
+                print("Error with the encryption key. Unable to delete the password.")
+                logging.warning(f"Failed to delete password for service: {service}. Key might be invalid.")
         else:
             print(f"No password found for service: {service}.")
             logging.warning(f"Attempted to delete non-existent password for service: {service}")
     else:
-        ("No Passwords stored yet")
+        print("No Passwords stored yet")
 
 
 def retrieve_password(service, key):
@@ -210,11 +220,12 @@ def main():
         
     elif args.command == 'delete':
         service = args.service or input("Enter the Service to be deleted :\n")
+        key = input("Enter your encryption key: ").encode()  # Added encryption key input
         confirmation = input(" Are you sure you want to delete this password entry? ( Y / N )")
         if confirmation.lower() == 'y':
             print("Deleting entry...")
             time.sleep(2)
-            delete_password(service)
+            delete_password(service, key)  # Pass key to delete_password function
             print(f"Entry for {service} has been deleted successfully.")
         elif confirmation.lower() == 'n':
             print("Deletion Canceled.")
