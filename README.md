@@ -74,9 +74,9 @@ Very intuitive and interactive CLI, no need to learn anything scripting related.
 - Use strong, unique passwords and consider generating new ones periodically.
 
 ## Todo
-- [] Fix some input related bugs
-- [] Add editing functionality
-- [] Implement an API Endpoint for the program ( run it on a cloud platform )
+- [ ] Fix some input related bugs
+- [ ] Add editing functionality
+- [ ] Implement an API Endpoint for the program ( run it on a cloud platform )
 
 
 ## Contributing
