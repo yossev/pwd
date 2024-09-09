@@ -55,22 +55,30 @@ def add_password(service, username, password, key):
     logging.info(f"Added password for service: {service}")
 
 
-def delete_password(service):
+def delete_password(service, key):
+    cipher_suite = get_cipher_suite(key)
     if os.path.exists(STORAGE_FILE):
         with open(STORAGE_FILE, 'r') as f:
             passwords = json.load(f)
-        
         if service in passwords:
-            del passwords[service]
             with open(STORAGE_FILE, 'w') as f:
                 json.dump(passwords, f, indent=4)
-            print(f"Password for {service} has been deleted.")
-            logging.info(f"Password for {service} has been deleted.")
+            try:
+                encrypted_password = passwords[service]['password']
+                cipher_suite.decrypt(encrypted_password.encode())
+                del passwords[service]
+                with open(STORAGE_FILE, 'w') as f:
+                    json.dump(passwords, f, indent=4)
+                print(f"Password for {service} has been deleted.")
+                logging.info(f"Password for {service} has been deleted.")
+            except Exception as e:
+                print("Error with the encryption key. Unable to delete the password , please make sure the key is correct.")
+                logging.warning(f"Failed to delete password for service: {service}. Key might be invalid.")
         else:
             print(f"No password found for service: {service}.")
             logging.warning(f"Attempted to delete non-existent password for service: {service}")
     else:
-        ("No Passwords stored yet")
+        print("No Passwords stored yet")
 
 
 def retrieve_password(service, key):
@@ -91,6 +99,11 @@ def retrieve_password(service, key):
                 if copy_pass.lower() ==  'y':
                     pyperclip.copy(decrypted_password)
                     print("Password Copied Successfully")
+                elif copy_pass.lower() == 'n':
+                    exit
+                else:
+                    print("Not a valid reponse.")
+                    exit
             except Exception as e:
                 print("Error decrypting the password. Invalid key or corrupted data.")
         else:
@@ -109,6 +122,9 @@ def generate_key():
     save_choice = input("Would you like to save the key to a file? (Y/N): \n")
     if save_choice.lower() == 'y':
         key_file_path = input("Enter the file path where you want to save the key: \n")
+        if key_file_path == "":
+            print("please enter a valid file path")
+            exit
         with open(key_file_path, 'wb') as key_file:
             key_file.write(key)
         print(f"Key saved to {key_file_path}")
@@ -117,6 +133,10 @@ def generate_key():
         if copy_choice.lower() == 'y':
             pyperclip.copy(key.decode())
             print("Your Key has been copied. please keep it safe.")
+        elif copy_choice.lower() == 'n':
+            exit
+        else:
+            print("Not a valid reponse.")
 
 
 def generate_password(length=12, include_uppercase=True, include_digits=True, include_symbols=False):
@@ -142,7 +162,9 @@ def generate_password(length=12, include_uppercase=True, include_digits=True, in
         print("Password has been copied Successfully.")
     elif generated_password_choice.lower() == 's':
         print(f"Here is your generated password {password}")
-
+    else:
+        print("Not a valid response.")
+        exit
 
 def list_services():
     if os.path.exists(STORAGE_FILE):
@@ -150,7 +172,7 @@ def list_services():
             passwords = json.load(f)
 
         if passwords:
-            print("Here are all the services stored currently :")
+            print("Here are all the services stored currently :\n")
             for service in passwords:
                 print(f"{service}")
         else:
@@ -210,11 +232,12 @@ def main():
         
     elif args.command == 'delete':
         service = args.service or input("Enter the Service to be deleted :\n")
+        key = input("Enter your encryption key: ").encode()
         confirmation = input(" Are you sure you want to delete this password entry? ( Y / N )")
         if confirmation.lower() == 'y':
             print("Deleting entry...")
             time.sleep(2)
-            delete_password(service)
+            delete_password(service, key)
             print(f"Entry for {service} has been deleted successfully.")
         elif confirmation.lower() == 'n':
             print("Deletion Canceled.")
