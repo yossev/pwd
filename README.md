@@ -73,6 +73,14 @@ Very intuitive and interactive CLI, no need to learn anything scripting related.
 - Ensure that your master key is stored securely. Losing the key means losing access to your encrypted passwords.
 - Use strong, unique passwords and consider generating new ones periodically.
 
+## Todo
+- [ ] Fix some input related bugs
+- [ ] Add editing functionality
+- [ ] Implement an API Endpoint for the program ( run it on a cloud platform )
+- [ ] Find an alternative for the JSON Storage
+- [ ] importation and exporation
+
+
 ## Contributing
 
 Contributions are welcome! Please Check the [Github Repo](https://github.com/yossev/pwd) to get started.
