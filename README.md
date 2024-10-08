@@ -13,6 +13,8 @@ PWD is a [Unix philosophy](https://en.wikipedia.org/wiki/Unix_philosophy) based 
 
 - **Password Generation**: Generate strong, random passwords with customizable options for length, uppercase letters, digits, and symbols.
 
+- **Password Breach Checker**: Checks if a password was exposed in breaches using the [HIBP API](https://haveibeenpwned.com/API/v3).
+
 - **Key Management**: Generate and store encryption keys securely. The master key is essential for encrypting and decrypting your passwords.
 
 - **Clipboard Integration**: Quickly copy your generated or retrieved passwords to the clipboard for convenience.
