@@ -1,6 +1,6 @@
-
 import argparse
-from cryptography.fernet import Fernet
+import hashlib
+from cryptography.fernet import Fernet # type: ignore
 import json
 import os
 import pyperclip
@@ -8,6 +8,7 @@ import secrets
 import time
 import string
 import logging
+import requests
 
 
 # LOGGER
@@ -181,6 +182,27 @@ def list_services():
         print("No password file found.")
 
 
+# PASSWORD BREACH CHECKER FUNCTION
+
+def check_password_breach(password):
+    sha1_password = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
+    
+    prefix = sha1_password[:5]
+    suffix = sha1_password[5:]
+
+    url = f"https://api.pwnedpasswords.com/range/{prefix}"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        hashes = (line.split(':') for line in response.text.splitlines())
+        for h, count in hashes:
+            if h == suffix:
+                return int(count)
+    return 0
+
+
+
+
 def main():
     parser = argparse.ArgumentParser(
     description="",
@@ -218,6 +240,11 @@ def main():
     # List Parser
     list_parser = subparsers.add_parser('list', help="List all the services that have passwords.")
 
+    # Breach Checker
+    breach_parser = subparsers.add_parser('check', help="Check for password leaks/breachers")
+    breach_parser.add_argument('password', nargs='?', help="The password to check")
+
+
     args = parser.parse_args()
 
     if args.command == 'add':
@@ -250,6 +277,18 @@ def main():
         time.sleep(2)
         retrieve_password(service, key)
 
+    elif args.command == 'check':
+        password = args.password or input("Enter the password to check : \n")
+        print("Checking password...")
+        time.sleep(1)
+        breach_count = check_password_breach(password)
+        if breach_count:
+            print(f"Warning: This password has been found in {breach_count} data breaches!")
+            print("It's strongly recommended to change this password.")
+        else:
+            print("Good news! This password hasn't been found in any known data breaches.")
+        logging.info(f"Password breach check performed. Result: {'Compromised' if breach_count else 'Not compromised'}")
+    
     elif args.command == 'gen-key':
         generate_key()
     
